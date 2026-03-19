@@ -2,10 +2,12 @@
  * Router tRPC per le funzionalità AI - Interpretazione tema astrale e compatibilità
  *
  * Provider: OpenRouter (https://openrouter.ai)
- * Modello principale: meta-llama/llama-3.3-70b-instruct:free
+ * Modello prioritario: deepseek/deepseek-r1:free (DeepSeek R1 - ragionamento avanzato)
  * Modelli fallback (tutti :free, nessun costo):
- *   1. google/gemma-3-27b-it:free
- *   2. google/gemma-3-12b-it:free
+ *   1. meta-llama/llama-3.3-70b-instruct:free
+ *   2. arcee-ai/trinity-large-preview:free
+ *   3. google/gemma-3-27b-it:free
+ *   4. google/gemma-3-12b-it:free
  *
  * NOTA: Questa funzione è l'UNICO punto modificato rispetto alla versione precedente.
  * Tutti gli input/output dei procedure tRPC sono rimasti identici.
@@ -15,11 +17,15 @@ import { z } from "zod";
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? "";
 
-// Modelli gratuiti in ordine di preferenza (tutti con suffisso :free)
+// Modelli gratuiti in ordine di preferenza (tutti con suffisso :free, nessun costo)
+// DeepSeek R1 è in cima come richiesto: ragionamento avanzato per interpretazioni profonde.
+// Se non disponibile, il sistema scala automaticamente ai modelli successivi.
 const FREE_MODELS = [
-  "meta-llama/llama-3.3-70b-instruct:free",
-  "google/gemma-3-27b-it:free",
-  "google/gemma-3-12b-it:free",
+  "deepseek/deepseek-r1:free",                    // DeepSeek R1 - ragionamento avanzato (prioritario)
+  "meta-llama/llama-3.3-70b-instruct:free",       // Llama 3.3 70B - ottimo per italiano
+  "arcee-ai/trinity-large-preview:free",          // Arcee Trinity - testato e funzionante
+  "google/gemma-3-27b-it:free",                   // Gemma 3 27B - ottimizzato per italiano
+  "google/gemma-3-12b-it:free",                   // Gemma 3 12B - fallback veloce
 ];
 
 /**

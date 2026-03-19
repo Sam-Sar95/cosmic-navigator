@@ -75,3 +75,6 @@
 
 ## Sostituzione Provider AI
 - [x] Sostituire chiamata Gemini con OpenRouter nel gemini-router.ts (solo backend)
+
+## Miglioramento Qualità AI
+- [x] Aggiungere DeepSeek R1 come modello prioritario nel servizio AI
