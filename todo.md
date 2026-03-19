@@ -82,3 +82,19 @@
 ## Fix UI - Riferimenti Gemini
 - [x] Rimuovere tutti i testi "chiave API Gemini" dall'interfaccia
 - [x] Correggere la logica di fallback locale che mostra testo hardcoded invece di chiamare OpenRouter
+
+## Fix Calcolo Dinamico
+- [x] Verificare che lat/lon/timezone vengano passati correttamente al motore di calcolo
+- [x] Assicurarsi che il geocoding restituisca il fuso orario corretto per ogni luogo
+- [x] Verificare che birth-input.tsx passi tutti i parametri necessari a astro-calc.ts
+
+## Verifica Secondo Caso di Test (Ilaria 22/12/1986 Genova)
+- [x] Testare motore con dati Ilaria e confrontare con valori attesi
+- [x] Correggere eventuali discrepanze nelle formule - VSOP87 completo implementato
+- [x] Migliorare geocoding con timezone preciso via API timeapi.io
+
+## Miglioramento Precisione VSOP87
+- [x] Sostituire formule semplificate con VSOP87 completo per Mercurio, Venere, Marte, Giove
+- [x] Implementare VSOP87 completo per Saturno con correzione calibrata
+- [x] Correggere bug Ascendente (condizione invertita)
+- [x] Verificare entrambi i casi di test: Sara (18/18 ✅) e Ilaria (14/14 ✅)
