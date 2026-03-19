@@ -1,42 +1,104 @@
 /**
- * Router tRPC per le funzionalità Gemini AI
- * Interpretazione del tema astrale e analisi compatibilità
+ * Router tRPC per le funzionalità AI - Interpretazione tema astrale e compatibilità
+ *
+ * Provider: OpenRouter (https://openrouter.ai)
+ * Modello principale: meta-llama/llama-3.3-70b-instruct:free
+ * Modelli fallback (tutti :free, nessun costo):
+ *   1. google/gemma-3-27b-it:free
+ *   2. google/gemma-3-12b-it:free
+ *
+ * NOTA: Questa funzione è l'UNICO punto modificato rispetto alla versione precedente.
+ * Tutti gli input/output dei procedure tRPC sono rimasti identici.
  */
 import { router, publicProcedure } from "./_core/trpc";
 import { z } from "zod";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? "";
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? "";
 
-async function callGemini(prompt: string): Promise<string> {
-  if (!GEMINI_API_KEY) {
-    throw new Error("Chiave API Gemini non configurata. Aggiungila nelle impostazioni dell'app.");
+// Modelli gratuiti in ordine di preferenza (tutti con suffisso :free)
+const FREE_MODELS = [
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "google/gemma-3-27b-it:free",
+  "google/gemma-3-12b-it:free",
+];
+
+/**
+ * Chiama OpenRouter con fallback automatico tra modelli gratuiti.
+ * Mantiene lo stesso contratto della precedente callGemini(prompt): string.
+ */
+async function callAI(prompt: string): Promise<string> {
+  if (!OPENROUTER_API_KEY) {
+    throw new Error(
+      "Chiave API OpenRouter non configurata. Aggiungila nelle impostazioni dell'app."
+    );
   }
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.8,
-          maxOutputTokens: 800,
+  let lastError: string = "";
+
+  for (const model of FREE_MODELS) {
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://cosmic-navigator.app",
+          "X-Title": "Cosmic Navigator",
         },
-      }),
-    }
-  );
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: "system",
+              content:
+                "Sei un astrologo esperto. Rispondi sempre in italiano con tono poetico, profondo e illuminante.",
+            },
+            { role: "user", content: prompt },
+          ],
+          max_tokens: 900,
+          temperature: 0.8,
+        }),
+      });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Errore Gemini API: ${err}`);
+      const data = await res.json() as any;
+
+      // Errore 429 (rate limit) o 404 (modello non disponibile) → prova il prossimo
+      if (data?.error) {
+        const code = data.error.code ?? data.error.status;
+        if (code === 429 || code === 404 || code === 503) {
+          lastError = `${model}: ${data.error.message ?? "unavailable"}`;
+          continue;
+        }
+        throw new Error(`Errore AI (${model}): ${data.error.message}`);
+      }
+
+      const text = data?.choices?.[0]?.message?.content;
+      if (text) return text.trim();
+
+      lastError = `${model}: risposta vuota`;
+    } catch (err: any) {
+      // Errore di rete → prova il prossimo modello
+      if (err.message?.includes("fetch")) {
+        lastError = `${model}: errore di rete`;
+        continue;
+      }
+      throw err;
+    }
   }
 
-  const data = await res.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text ?? "Nessuna risposta disponibile.";
+  throw new Error(
+    `Tutti i modelli AI sono temporaneamente non disponibili. Riprova tra qualche minuto. (${lastError})`
+  );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Router tRPC — Input/Output IDENTICI alla versione precedente con Gemini
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const geminiRouter = router({
+  /**
+   * Interpreta un singolo elemento astrologico (pianeta, ascendente, ecc.)
+   */
   interpretElement: publicProcedure
     .input(
       z.object({
@@ -62,10 +124,12 @@ Descrivi:
 
 Tono: poetico, profondo, illuminante. Lunghezza: 3-4 paragrafi.`;
 
-      const text = await callGemini(prompt);
-      return text;
+      return await callAI(prompt);
     }),
 
+  /**
+   * Interpreta il tema astrale completo
+   */
   interpretFullTheme: publicProcedure
     .input(
       z.object({
@@ -99,10 +163,12 @@ Fornisci:
 
 Tono: profondo, empatico, costruttivo. Lunghezza: 4-5 paragrafi.`;
 
-      const text = await callGemini(prompt);
-      return text;
+      return await callAI(prompt);
     }),
 
+  /**
+   * Analizza la compatibilità tra due temi astrali (sinastria)
+   */
   analyzeCompatibility: publicProcedure
     .input(
       z.object({
@@ -145,7 +211,6 @@ Analizza:
 
 Tono: equilibrato, onesto, costruttivo. Lunghezza: 4-5 paragrafi.`;
 
-      const text = await callGemini(prompt);
-      return text;
+      return await callAI(prompt);
     }),
 });

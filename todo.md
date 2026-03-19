@@ -72,3 +72,6 @@
 
 ## Miglioramenti UI (post-consegna)
 - [x] Migliorare tab bar: icone più grandi, etichette su una riga, colori più luminosi
+
+## Sostituzione Provider AI
+- [x] Sostituire chiamata Gemini con OpenRouter nel gemini-router.ts (solo backend)
