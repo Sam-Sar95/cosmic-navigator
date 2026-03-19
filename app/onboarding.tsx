@@ -111,7 +111,7 @@ export default function OnboardingScreen() {
       <Animated.View style={[styles.features, { opacity: subtitleOpacity }]}>
         {[
           { icon: "🪐", text: "Tema astrale completo" },
-          { icon: "✨", text: "Interpretazioni AI con Gemini" },
+          { icon: "✨", text: "Interpretazioni AI avanzate" },
           { icon: "💫", text: "Compatibilità tra temi" },
         ].map((f) => (
           <View key={f.text} style={styles.featureRow}>

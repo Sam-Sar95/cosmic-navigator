@@ -116,7 +116,7 @@ export default function CompatibilityScreen() {
       `☉ Sole: ${a.astrologicalData.sun.sign} × ${b.astrologicalData.sun.sign}\n` +
       `☽ Luna: ${a.astrologicalData.moon.sign} × ${b.astrologicalData.moon.sign}\n` +
       `AC Ascendente: ${a.astrologicalData.ascendant.sign} × ${b.astrologicalData.ascendant.sign}\n\n` +
-      `Per un'analisi approfondita, assicurati che la chiave API Gemini sia configurata nell'app.`;
+      `Analisi di compatibilità generata con AI avanzata.`;  // Appare solo se il server AI non è raggiungibile
   }
 
   function ThemePicker({ visible, onClose, onSelect }: { visible: boolean; onClose: () => void; onSelect: (t: SavedTheme) => void }) {
@@ -243,7 +243,7 @@ export default function CompatibilityScreen() {
             {loadingAnalysis ? (
               <ActivityIndicator color="#ffffff" />
             ) : (
-              <Text style={styles.analyzeBtnText}>✨ Analisi AI con Gemini</Text>
+              <Text style={styles.analyzeBtnText}>✨ Analisi AI Compatibilità</Text>
             )}
           </TouchableOpacity>
         )}

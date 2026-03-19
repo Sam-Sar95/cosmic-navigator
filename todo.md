@@ -78,3 +78,7 @@
 
 ## Miglioramento Qualità AI
 - [x] Aggiungere DeepSeek R1 come modello prioritario nel servizio AI
+
+## Fix UI - Riferimenti Gemini
+- [x] Rimuovere tutti i testi "chiave API Gemini" dall'interfaccia
+- [x] Correggere la logica di fallback locale che mostra testo hardcoded invece di chiamare OpenRouter

@@ -120,7 +120,7 @@ export default function ProfileScreen() {
           {[
             { icon: "🪐", label: "Versione", value: "1.0.0" },
             { icon: "✨", label: "Motore astrologico", value: "Meeus Algorithms" },
-            { icon: "🤖", label: "AI", value: "Google Gemini" },
+            { icon: "🤖", label: "AI", value: "OpenRouter (DeepSeek R1 / Llama)" },
             { icon: "📍", label: "Geocoding", value: "Nominatim / OpenStreetMap" },
           ].map((row) => (
             <View key={row.label} style={styles.infoRow}>

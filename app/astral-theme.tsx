@@ -91,7 +91,7 @@ function getLocalInterpretation(p: PlanetaryPosition): string {
     `Il ${p.name} in ${p.sign} porta con sé caratteristiche di ${getSignKeywords(p.sign)}. ` +
     `La Casa ${p.house} amplifica questi temi nella sfera ${getHouseTheme(p.house)} della vita.\n\n` +
     (p.retrograde ? `Il moto retrogrado suggerisce una riflessione interiore e una rielaborazione delle energie di questo pianeta.\n\n` : "") +
-    `Per un'interpretazione più approfondita e personalizzata, assicurati che la chiave API Gemini sia configurata nell'app.`;
+    `Interpretazione generata con AI avanzata.`;  // Questo testo appare solo se il server AI non è raggiungibile
 }
 
 interface InterpretationModalProps {
@@ -160,7 +160,7 @@ function InterpretationModal({ visible, planet, onClose }: InterpretationModalPr
             {loading ? (
               <View style={iStyles.loadingContainer}>
                 <ActivityIndicator color="#a78bfa" size="large" />
-                <Text style={iStyles.loadingText}>✨ Gemini sta interpretando...</Text>
+                <Text style={iStyles.loadingText}>✨ AI sta interpretando...</Text>
                 <Text style={iStyles.loadingSubText}>Connessione con l'intelligenza cosmica...</Text>
               </View>
             ) : (
@@ -316,7 +316,7 @@ export default function AstralThemeScreen() {
               {/* Nota interpretazione */}
               <View style={styles.aiHint}>
                 <Text style={styles.aiHintText}>
-                  ✨ Tocca qualsiasi pianeta o punto astrale per ricevere un'interpretazione personalizzata da Gemini AI
+                  ✨ Tocca qualsiasi pianeta o punto astrale per ricevere un'interpretazione personalizzata con AI avanzata
                 </Text>
               </View>
             </View>
