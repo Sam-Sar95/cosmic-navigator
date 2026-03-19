@@ -69,3 +69,6 @@
 ## Phase 11: Consegna
 - [x] Creare checkpoint finale
 - [x] Consegnare app all'utente
+
+## Miglioramenti UI (post-consegna)
+- [x] Migliorare tab bar: icone più grandi, etichette su una riga, colori più luminosi
