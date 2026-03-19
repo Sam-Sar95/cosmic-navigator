@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, astralThemes, InsertAstralTheme, AstralTheme, interpretations, InsertInterpretation, Interpretation, compatibilityRecords, InsertCompatibilityRecord, CompatibilityRecord } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,114 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Astral Theme Functions
+
+export async function createAstralTheme(data: InsertAstralTheme) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot create astral theme: database not available");
+    return;
+  }
+  const result = await db.insert(astralThemes).values(data);
+  return (result as any).insertId;
+}
+
+export async function getAstralThemeById(id: number): Promise<AstralTheme | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(astralThemes)
+    .where(eq(astralThemes.id, id));
+  return result[0];
+}
+
+export async function getUserAstralThemes(userId: number): Promise<AstralTheme[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(astralThemes)
+    .where(eq(astralThemes.userId, userId));
+}
+
+export async function updateAstralTheme(
+  id: number,
+  data: Partial<InsertAstralTheme>
+) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .update(astralThemes)
+    .set(data)
+    .where(eq(astralThemes.id, id));
+}
+
+export async function deleteAstralTheme(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db
+    .delete(astralThemes)
+    .where(eq(astralThemes.id, id));
+}
+
+// Interpretation Functions
+
+export async function createInterpretation(data: InsertInterpretation) {
+  const db = await getDb();
+  if (!db) return;
+  const result = await db.insert(interpretations).values(data);
+  return (result as any).insertId;
+}
+
+export async function getInterpretation(
+  themeId: number,
+  elementName: string
+): Promise<Interpretation | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(interpretations)
+    .where(eq(interpretations.themeId, themeId) && eq(interpretations.elementName, elementName));
+  return result[0];
+}
+
+export async function getThemeInterpretations(themeId: number): Promise<Interpretation[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(interpretations)
+    .where(eq(interpretations.themeId, themeId));
+}
+
+// Compatibility Functions
+
+export async function createCompatibilityRecord(data: InsertCompatibilityRecord) {
+  const db = await getDb();
+  if (!db) return;
+  const result = await db.insert(compatibilityRecords).values(data);
+  return (result as any).insertId;
+}
+
+export async function getCompatibilityRecord(
+  id: number
+): Promise<CompatibilityRecord | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(compatibilityRecords)
+    .where(eq(compatibilityRecords.id, id));
+  return result[0];
+}
+
+export async function getUserCompatibilityRecords(userId: number): Promise<CompatibilityRecord[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(compatibilityRecords)
+    .where(eq(compatibilityRecords.userId, userId));
+}
