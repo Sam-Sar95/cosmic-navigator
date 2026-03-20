@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { trpc } from "@/lib/trpc";
-import { generateId, saveTheme } from "@/lib/astral-store";
+import { generateId, saveTheme, hasPersonalProfile, PERSONAL_PROFILE_ID } from "@/lib/astral-store";
 import type { BirthData } from "@/lib/astral-store";
 
 // Dati di geocoding per le città italiane più comuni
@@ -195,9 +195,13 @@ export default function BirthInputScreen() {
       // Mantieni i metadati
       if (rawData.meta) normalizedData.meta = rawData.meta;
 
+      // Il primo tema creato diventa il Profilo Personale (ID fisso: user_me)
+      const isFirstTheme = !(await hasPersonalProfile());
+      const themeId = isFirstTheme ? PERSONAL_PROFILE_ID : generateId();
+
       const theme = {
-        id: generateId(),
-        name: name.trim(),
+        id: themeId,
+        name: isFirstTheme ? `Mio Profilo Personale (${name.trim()})` : name.trim(),
         birthData,
         astrologicalData: normalizedData,
         createdAt: new Date().toISOString(),

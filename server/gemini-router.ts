@@ -173,6 +173,62 @@ Tono: profondo, empatico, costruttivo. Lunghezza: 4-5 paragrafi.`;
     }),
 
   /**
+   * Genera l'Energia del Giorno basata sui transiti attuali rispetto al segno solare
+   */
+  dailyEnergy: publicProcedure
+    .input(
+      z.object({
+        sunSign: z.string(),
+        moonSign: z.string(),
+        ascendantSign: z.string(),
+        todayDate: z.string(), // formato: "20 marzo 2026"
+      })
+    )
+    .mutation(async ({ input }) => {
+      const prompt = `Sei un astrologo esperto. Oggi è ${input.todayDate}.
+
+Il profilo astrale dell'utente:
+☉ Sole natale in ${input.sunSign}
+☽ Luna natale in ${input.moonSign}
+AC Ascendente natale in ${input.ascendantSign}
+
+Genera una lettura astrologica del giorno in italiano con:
+1. **Energia del Giorno** (2-3 frasi): come i transiti di oggi interagiscono con il profilo natale
+2. **Consiglio Astrale** (1-2 frasi): un'azione concreta o un atteggiamento consigliato per oggi
+3. **Parola Chiave del Giorno** (1 parola sola, in maiuscolo)
+
+Tono: ispirazionale, pratico, poetico. Sii specifico per il segno ${input.sunSign}.`;
+
+      return await callAI(prompt);
+    }),
+
+  /**
+   * Risponde a una domanda specifica dell'utente sul suo tema natale
+   */
+  askAstrologer: publicProcedure
+    .input(
+      z.object({
+        question: z.string(),
+        sunSign: z.string(),
+        moonSign: z.string(),
+        ascendantSign: z.string(),
+        venusSign: z.string(),
+        marsSign: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const prompt = `Sei un astrologo esperto e saggio. L'utente ha il seguente tema natale:
+☉ Sole in ${input.sunSign} | ☽ Luna in ${input.moonSign} | AC in ${input.ascendantSign}
+♀ Venere in ${input.venusSign} | ♂ Marte in ${input.marsSign}
+
+L'utente ti chiede: "${input.question}"
+
+Rispondi in italiano con tono empatico, profondo e illuminante. Sii specifico rispetto al tema natale dell'utente. Lunghezza: 2-4 paragrafi.`;
+
+      return await callAI(prompt);
+    }),
+
+  /**
    * Analizza la compatibilità tra due temi astrali (sinastria)
    */
   analyzeCompatibility: publicProcedure

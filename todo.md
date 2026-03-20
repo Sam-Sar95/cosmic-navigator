@@ -105,3 +105,11 @@
 - [x] Gestione automatica UTC/ora legale con timezonefinder
 - [x] Collegare il servizio Python al router Node.js tRPC
 - [x] Verificare entrambi i casi di test con pyswisseph (Sara 15/15 ✅, Ilaria 7/15 - diff ±1' per Moshier vs Astrodienst)
+
+## Modifiche strutturali e grafiche (20/03/2026)
+- [x] Distinzione Profilo Personale (ID: user_me) vs Temi Archivio in astral-store.ts
+- [x] birth-input.tsx: primo tema salvato come Profilo Personale (ID fisso user_me)
+- [x] Tab Tema trasformata in Bussola Quotidiana (Energia del Giorno + chat IA)
+- [x] Procedure AI aggiunte: gemini.dailyEnergy e gemini.askAstrologer
+- [x] Compatibilità: pre-selezione automatica Profilo Personale come Tema A
+- [x] ThemePicker: altezza fissa 60% schermo per scrolling affidabile

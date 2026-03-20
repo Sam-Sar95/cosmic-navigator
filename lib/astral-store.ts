@@ -67,6 +67,24 @@ export interface SavedTheme {
 }
 
 const THEMES_KEY = "cosmic_navigator_themes";
+export const PERSONAL_PROFILE_ID = "user_me";
+
+/** Restituisce il tema del Profilo Personale (ID: user_me), o null se non ancora creato */
+export async function getPersonalProfile(): Promise<SavedTheme | null> {
+  return getThemeById(PERSONAL_PROFILE_ID);
+}
+
+/** Controlla se esiste già un Profilo Personale */
+export async function hasPersonalProfile(): Promise<boolean> {
+  const p = await getPersonalProfile();
+  return p !== null;
+}
+
+/** Restituisce solo i temi Archivio (esclude il Profilo Personale) */
+export async function getArchiveThemes(): Promise<SavedTheme[]> {
+  const all = await getSavedThemes();
+  return all.filter((t) => t.id !== PERSONAL_PROFILE_ID);
+}
 
 export async function getSavedThemes(): Promise<SavedTheme[]> {
   try {

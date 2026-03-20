@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getSavedThemes } from "@/lib/astral-store";
+import { getSavedThemes, getPersonalProfile } from "@/lib/astral-store";
 import type { SavedTheme } from "@/lib/astral-store";
 import { trpc } from "@/lib/trpc";
 
@@ -176,6 +176,14 @@ export default function CompatibilityScreen() {
   const [showPickerB, setShowPickerB] = useState(false);
   const [analysis, setAnalysis] = useState("");
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
+
+  // Pre-seleziona automaticamente il Profilo Personale come Tema A
+  useEffect(() => {
+    getPersonalProfile().then((profile) => {
+      if (profile && !themeA) setThemeA(profile);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const compatibilityMutation = trpc.gemini.analyzeCompatibility.useMutation();
 
