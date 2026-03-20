@@ -142,11 +142,62 @@ export default function BirthInputScreen() {
         placeName: place.trim(),
       });
 
+      // Normalizza i dati del backend (pyswisseph) per allinearli ai tipi del frontend
+      const PLANET_NAMES: Record<string, { name: string; symbol: string }> = {
+        sun:       { name: "Sole",            symbol: "☉" },
+        moon:      { name: "Luna",            symbol: "☽" },
+        mercury:   { name: "Mercurio",        symbol: "☿" },
+        venus:     { name: "Venere",          symbol: "♀" },
+        mars:      { name: "Marte",           symbol: "♂" },
+        jupiter:   { name: "Giove",           symbol: "♃" },
+        saturn:    { name: "Saturno",         symbol: "♄" },
+        uranus:    { name: "Urano",           symbol: "♅" },
+        neptune:   { name: "Nettuno",         symbol: "♆" },
+        pluto:     { name: "Plutone",         symbol: "♇" },
+        northNode: { name: "Nodo della Luna", symbol: "☊" },
+        lilith:    { name: "Lilith",          symbol: "⚸" },
+        chiron:    { name: "Chirone",         symbol: "⚷" },
+        ascendant: { name: "Ascendente",      symbol: "AC" },
+        midheaven: { name: "Medio Cielo",     symbol: "MC" },
+      };
+
+      const rawData = astroData as any;
+      const normalizedData: any = {};
+
+      // Normalizza ogni pianeta aggiungendo name, symbol, seconds mancanti
+      for (const key of Object.keys(PLANET_NAMES)) {
+        if (rawData[key]) {
+          normalizedData[key] = {
+            ...rawData[key],
+            name: PLANET_NAMES[key].name,
+            symbol: PLANET_NAMES[key].symbol,
+            seconds: rawData[key].seconds ?? 0,
+            latitude: rawData[key].latitude ?? 0,
+          };
+        }
+      }
+
+      // Normalizza le case: backend usa 'house' come numero, frontend si aspetta 'number'
+      normalizedData.houses = Array.isArray(rawData.houses)
+        ? rawData.houses.map((h: any) => ({
+            number: h.house ?? h.number ?? 0,  // backend usa 'house', frontend usa 'number'
+            house: h.house ?? h.number ?? 0,   // mantieni entrambi per compatibilità
+            sign: h.sign ?? "",
+            longitude: h.longitude ?? 0,
+            degrees: h.degrees ?? 0,
+            minutes: h.minutes ?? 0,
+            seconds: h.seconds ?? 0,
+          }))
+        : [];
+
+      // Mantieni i metadati
+      if (rawData.meta) normalizedData.meta = rawData.meta;
+
       const theme = {
         id: generateId(),
         name: name.trim(),
         birthData,
-        astrologicalData: astroData as any,
+        astrologicalData: normalizedData,
         createdAt: new Date().toISOString(),
       };
 

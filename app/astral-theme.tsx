@@ -41,7 +41,10 @@ const PLANET_ORDER = [
 
 function formatPos(p: PlanetaryPosition): string {
   const r = p.retrograde ? " ℞" : "";
-  return `${p.degrees}°${String(p.minutes).padStart(2,"0")}' ${p.sign}${r}`;
+  const deg = p.degrees ?? 0;
+  const min = p.minutes ?? 0;
+  const sign = p.sign ?? "?";
+  return `${deg}°${String(min).padStart(2,"0")}' ${sign}${r}`;
 }
 
 function getPlanetKey(name: string): string {
@@ -144,10 +147,10 @@ function InterpretationModal({ visible, planet, onClose }: InterpretationModalPr
           {/* Header */}
           <View style={iStyles.header}>
             <View style={[iStyles.symbolBadge, { backgroundColor: color + "22", borderColor: color }]}>
-              <Text style={[iStyles.symbol, { color }]}>{planet.symbol}</Text>
+              <Text style={[iStyles.symbol, { color }]}>{planet.symbol ?? "?"}</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={iStyles.planetName}>{planet.name}</Text>
+              <Text style={iStyles.planetName}>{planet.name ?? "Pianeta"}</Text>
               <Text style={[iStyles.position, { color }]}>{formatPos(planet)}</Text>
               <Text style={iStyles.house}>Casa {planet.house}</Text>
             </View>
@@ -264,10 +267,10 @@ export default function AstralThemeScreen() {
                       onPress={() => handlePlanetPress(p)}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.bigThreeSymbol, { color }]}>{p.symbol}</Text>
-                      <Text style={[styles.bigThreeName, { color }]}>{p.name}</Text>
-                      <Text style={styles.bigThreeSign}>{p.sign}</Text>
-                      <Text style={styles.bigThreeDeg}>{p.degrees}°{String(p.minutes).padStart(2,"0")}'</Text>
+                      <Text style={[styles.bigThreeSymbol, { color }]}>{p.symbol ?? k}</Text>
+                      <Text style={[styles.bigThreeName, { color }]}>{p.name ?? k}</Text>
+                      <Text style={styles.bigThreeSign}>{p.sign ?? "?"}</Text>
+                      <Text style={styles.bigThreeDeg}>{p.degrees ?? 0}°{String(p.minutes ?? 0).padStart(2,"0")}'</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -277,6 +280,7 @@ export default function AstralThemeScreen() {
           }
           renderItem={({ item }) => {
             const { key, planet: p } = item;
+            if (!p) return null; // sicurezza: salta pianeti mancanti
             const color = PLANET_COLORS[key] ?? "#a78bfa";
             const isBigThree = ["sun","moon","ascendant"].includes(key);
             if (isBigThree) return null;
@@ -287,14 +291,14 @@ export default function AstralThemeScreen() {
                 activeOpacity={0.8}
               >
                 <View style={[styles.symbolCircle, { backgroundColor: color + "22", borderColor: color }]}>
-                  <Text style={[styles.symbolText, { color }]}>{p.symbol}</Text>
+                  <Text style={[styles.symbolText, { color }]}>{p.symbol ?? key}</Text>
                 </View>
                 <View style={styles.planetInfo}>
-                  <Text style={styles.planetName}>{p.name}</Text>
+                  <Text style={styles.planetName}>{p.name ?? key}</Text>
                   <Text style={[styles.planetPos, { color }]}>{formatPos(p)}</Text>
                 </View>
                 <View style={styles.houseTag}>
-                  <Text style={styles.houseTagText}>Casa {p.house}</Text>
+                  <Text style={styles.houseTagText}>Casa {p.house ?? "?"}</Text>
                 </View>
                 <Text style={styles.chevron}>›</Text>
               </TouchableOpacity>
@@ -305,13 +309,23 @@ export default function AstralThemeScreen() {
               {/* Case astrologiche */}
               <Text style={styles.sectionTitle2}>Case Astrologiche</Text>
               <View style={styles.housesGrid}>
-                {data.houses.map((h) => (
-                  <View key={h.number} style={styles.houseCell}>
-                    <Text style={styles.houseCellNum}>Casa {h.number}</Text>
-                    <Text style={styles.houseCellSign}>{h.sign}</Text>
-                    <Text style={styles.houseCellDeg}>{h.degrees}°{String(h.minutes).padStart(2,"0")}'</Text>
+                {Array.isArray(data.houses) && data.houses.length > 0 ? (
+                  data.houses.map((h: any, index: number) => {
+                    // Supporta sia il campo 'number' (frontend) che 'house' (backend raw)
+                    const houseNum = h.number ?? h.house ?? (index + 1);
+                    return (
+                      <View key={`house-${houseNum}-${index}`} style={styles.houseCell}>
+                        <Text style={styles.houseCellNum}>Casa {houseNum}</Text>
+                        <Text style={styles.houseCellSign}>{h.sign ?? "?"}</Text>
+                        <Text style={styles.houseCellDeg}>{h.degrees ?? 0}°{String(h.minutes ?? 0).padStart(2,"0")}'</Text>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <View style={styles.houseCell}>
+                    <Text style={styles.houseCellSign}>Dati case non disponibili</Text>
                   </View>
-                ))}
+                )}
               </View>
               {/* Nota interpretazione */}
               <View style={styles.aiHint}>
