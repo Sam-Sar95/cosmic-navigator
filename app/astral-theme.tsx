@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { getThemeById } from "@/lib/astral-store";
 import type { PlanetaryPosition, SavedTheme } from "@/lib/astral-store";
 import { trpc } from "@/lib/trpc";
+import { getApiBaseUrl } from "@/constants/oauth";
 
 const PLANET_COLORS: Record<string, string> = {
   sun:       "#fbbf24",
@@ -171,14 +172,9 @@ export default function AstralThemeScreen() {
     });
   }, [themeId]);
 
-  const handlePlanetPress = (planet: PlanetaryPosition) => {
-    setSelectedPlanet(planet);
-    setInterpText("");
-    setInterpLoading(true);
-    setShowModal(true);
-
-    interpretMutation.mutate(
-      {
+  const callInterpretationApi = async (planet: PlanetaryPosition): Promise<string> => {
+    const payload = {
+      json: {
         planetName: planet.name ?? "",
         sign: planet.sign ?? "",
         degrees: planet.degrees ?? 0,
@@ -186,17 +182,55 @@ export default function AstralThemeScreen() {
         house: planet.house ?? 1,
         retrograde: planet.retrograde ?? false,
       },
-      {
-        onSuccess: (data) => {
-          setInterpText(typeof data === "string" ? data : getLocalInterpretation(planet));
-          setInterpLoading(false);
-        },
-        onError: () => {
-          setInterpText(getLocalInterpretation(planet));
-          setInterpLoading(false);
-        },
+    };
+
+    // Prova prima con il client tRPC (usa URL configurato)
+    try {
+      const result = await interpretMutation.mutateAsync(payload.json);
+      if (typeof result === "string" && result.length > 10) return result;
+    } catch (_) {
+      // fallback al fetch diretto
+    }
+
+    // Fallback: fetch diretto all'URL pubblico assoluto
+    const apiBase = getApiBaseUrl();
+    if (apiBase) {
+      try {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 30000);
+        const res = await fetch(`${apiBase}/api/trpc/gemini.interpretElement`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify(payload),
+        });
+        clearTimeout(tid);
+        const d = await res.json();
+        const text = d?.result?.data?.json;
+        if (typeof text === "string" && text.length > 10) return text;
+      } catch (_) {
+        // fallback locale
       }
-    );
+    }
+
+    return getLocalInterpretation(planet);
+  };
+
+  const handlePlanetPress = (planet: PlanetaryPosition) => {
+    setSelectedPlanet(planet);
+    setInterpText("");
+    setInterpLoading(true);
+    setShowModal(true);
+
+    callInterpretationApi(planet)
+      .then((text) => {
+        setInterpText(text);
+        setInterpLoading(false);
+      })
+      .catch(() => {
+        setInterpText(getLocalInterpretation(planet));
+        setInterpLoading(false);
+      });
   };
 
   const handleCloseModal = () => {
