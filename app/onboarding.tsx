@@ -103,7 +103,7 @@ export default function OnboardingScreen() {
         <Text style={styles.subtitle}>Scopri il tuo tema astrale</Text>
         <Text style={styles.description}>
           Calcola le posizioni planetarie al momento della tua nascita e ottieni
-          interpretazioni personalizzate con l'intelligenza artificiale.
+          interpretazioni personalizzate con l'intelligenza cosmica.
         </Text>
       </Animated.View>
 
