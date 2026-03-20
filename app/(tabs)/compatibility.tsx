@@ -456,17 +456,19 @@ const pickerStyles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.72)",
   },
-  // Il foglio ha un'altezza massima del 72% dello schermo e usa flexbox column
+  // Il foglio ha un'altezza FISSA al 60% dello schermo (non maxHeight)
+  // Questo garantisce che il FlatList con flex:1 abbia sempre spazio da occupare
   sheet: {
     backgroundColor: "#0d1128",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderTopWidth: 1,
     borderColor: "#2e3a5c",
-    // Altezza massima esplicita in pixel per evitare problemi con "70%"
-    maxHeight: SCREEN_HEIGHT * 0.72,
+    // Altezza fissa: il foglio è sempre 60% dello schermo
+    height: SCREEN_HEIGHT * 0.60,
     // Layout column: handle → titolo → lista (flex:1) → bottone
     flexDirection: "column",
+    overflow: "hidden",
   },
   handle: {
     width: 40, height: 4, backgroundColor: "#2e3a5c",

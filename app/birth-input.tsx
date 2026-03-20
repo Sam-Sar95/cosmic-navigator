@@ -24,7 +24,7 @@ const CITY_DATA: Record<string, { lat: number; lon: number; tz: number }> = {
   "roma":         { lat: 41.9028, lon: 12.4964, tz: 2 },
   "milano":       { lat: 45.4642, lon: 9.1900,  tz: 2 },
   "napoli":       { lat: 40.8518, lon: 14.2681, tz: 2 },
-  "torino":       { lat: 45.0703, lon: 7.6869,  tz: 2 },
+  "torino":       { lat: 45.0333, lon: 7.6667,  tz: 1 },  // 45°2'N 7°40'E – centro storico; tz=1 CET, DST auto
   "palermo":      { lat: 38.1157, lon: 13.3615, tz: 2 },
   "genova":       { lat: 44.4000, lon: 8.8833,  tz: 1 },  // 44°24'N 8°53'E (coordinate esatte)
   "bologna":      { lat: 44.4949, lon: 11.3426, tz: 2 },
@@ -128,7 +128,9 @@ export default function BirthInputScreen() {
         year: y, month: m, day: d,
         hour: h, minute: min,
         latitude: geo.lat, longitude: geo.lon,
-        timezone: geo.tz,
+        // Non passiamo timezone fisso: il backend usa timezonefinder+pytz per rilevare
+        // automaticamente l'ora legale (DST) in base a coordinate e data
+        timezone: undefined,
         placeName: place.trim(),
       };
 
@@ -138,7 +140,7 @@ export default function BirthInputScreen() {
         hour: h, minute: min,
         latitude: geo.lat,
         longitude: geo.lon,
-        timezone: geo.tz,
+        // timezone omesso: il backend calcola automaticamente DST tramite timezonefinder+pytz
         placeName: place.trim(),
       });
 

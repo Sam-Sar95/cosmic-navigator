@@ -54,7 +54,7 @@ export interface BirthData {
   minute: number;
   latitude: number;
   longitude: number;
-  timezone: number;
+  timezone?: number;  // opzionale: se omesso, il backend calcola automaticamente DST
   placeName: string;
 }
 

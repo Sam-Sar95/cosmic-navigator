@@ -707,7 +707,7 @@ function getHouseNumber(lon: number, houses: House[]): number {
 
 export function calculateAstralTheme(birth: BirthData): AstrologicalData {
   // Converti ora locale in UTC
-  let utcHour = birth.hour + birth.minute / 60 - birth.timezone;
+  let utcHour = birth.hour + birth.minute / 60 - (birth.timezone ?? 0);
   let day = birth.day, month = birth.month, year = birth.year;
   if (utcHour < 0)  { utcHour += 24; day -= 1; }
   if (utcHour >= 24) { utcHour -= 24; day += 1; }
