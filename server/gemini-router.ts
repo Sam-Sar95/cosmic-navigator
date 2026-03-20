@@ -21,11 +21,10 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY ?? "";
 // DeepSeek R1 è in cima come richiesto: ragionamento avanzato per interpretazioni profonde.
 // Se non disponibile, il sistema scala automaticamente ai modelli successivi.
 const FREE_MODELS = [
-  "deepseek/deepseek-r1:free",                    // DeepSeek R1 - ragionamento avanzato (prioritario)
-  "meta-llama/llama-3.3-70b-instruct:free",       // Llama 3.3 70B - ottimo per italiano
   "arcee-ai/trinity-large-preview:free",          // Arcee Trinity - testato e funzionante
   "google/gemma-3-27b-it:free",                   // Gemma 3 27B - ottimizzato per italiano
   "google/gemma-3-12b-it:free",                   // Gemma 3 12B - fallback veloce
+  "meta-llama/llama-3.3-70b-instruct:free",       // Llama 3.3 70B - ottimo per italiano
 ];
 
 /**
@@ -43,39 +42,43 @@ async function callAI(prompt: string): Promise<string> {
 
   for (const model of FREE_MODELS) {
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "https://cosmic-navigator.app",
-          "X-Title": "Cosmic Navigator",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: "system",
-              content:
-                "Sei un astrologo esperto. Rispondi sempre in italiano con tono poetico, profondo e illuminante.",
-            },
-            { role: "user", content: prompt },
-          ],
-          max_tokens: 900,
-          temperature: 0.8,
-        }),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout per modello
+      let res: Response;
+      try {
+        res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          signal: controller.signal,
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://cosmic-navigator.app",
+            "X-Title": "Cosmic Navigator",
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Sei un astrologo esperto. Rispondi sempre in italiano con tono poetico, profondo e illuminante.",
+              },
+              { role: "user", content: prompt },
+            ],
+            max_tokens: 900,
+            temperature: 0.8,
+          }),
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       const data = await res.json() as any;
 
-      // Errore 429 (rate limit) o 404 (modello non disponibile) → prova il prossimo
+      // Errore 429/404/503 o qualsiasi errore API → prova il prossimo modello
       if (data?.error) {
-        const code = data.error.code ?? data.error.status;
-        if (code === 429 || code === 404 || code === 503) {
-          lastError = `${model}: ${data.error.message ?? "unavailable"}`;
-          continue;
-        }
-        throw new Error(`Errore AI (${model}): ${data.error.message}`);
+        lastError = `${model}: ${data.error.message ?? "unavailable"} (code: ${data.error.code ?? data.error.status})`;
+        continue; // salta sempre al modello successivo in caso di errore
       }
 
       const text = data?.choices?.[0]?.message?.content;
@@ -83,12 +86,9 @@ async function callAI(prompt: string): Promise<string> {
 
       lastError = `${model}: risposta vuota`;
     } catch (err: any) {
-      // Errore di rete → prova il prossimo modello
-      if (err.message?.includes("fetch")) {
-        lastError = `${model}: errore di rete`;
-        continue;
-      }
-      throw err;
+      // Timeout, errore di rete o abort → prova il prossimo modello
+      lastError = `${model}: ${err.name === 'AbortError' ? 'timeout' : (err.message ?? 'errore di rete')}`;
+      continue;
     }
   }
 
