@@ -458,8 +458,10 @@ const iStyles = StyleSheet.create({
     backgroundColor: "#0d1128",
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
     maxHeight: "82%",
+    minHeight: 300,
     borderTopWidth: 1, borderColor: "#2e3a5c",
     flexDirection: "column",
+    flex: 0,
   },
   handle: {
     width: 40, height: 4, backgroundColor: "#2e3a5c",
