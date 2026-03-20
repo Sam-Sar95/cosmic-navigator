@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getThemeById } from "@/lib/astral-store";
 import type { AstrologicalData, PlanetaryPosition, SavedTheme } from "@/lib/astral-store";
-import { trpc } from "@/lib/trpc";
+import { getApiBaseUrl } from "@/constants/oauth";
 
 const PLANET_COLORS: Record<string, string> = {
   sun:       "#fbbf24",
@@ -106,33 +106,51 @@ interface InterpretationModalProps {
 function InterpretationModal({ visible, planet, onClose }: InterpretationModalProps) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const interpretMutation = trpc.gemini.interpretElement.useMutation();
 
   useEffect(() => {
     if (!visible || !planet) return;
     setText("");
     setLoading(true);
 
-    interpretMutation.mutate(
-      {
-        planetName: planet.name,
-        sign: planet.sign,
-        degrees: planet.degrees,
-        minutes: planet.minutes,
-        house: planet.house,
-        retrograde: planet.retrograde,
-      },
-      {
-        onSuccess: (data) => {
-          setText(data);
-          setLoading(false);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    fetch(`${getApiBaseUrl()}/api/trpc/gemini.interpretElement`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        json: {
+          planetName: planet.name,
+          sign: planet.sign,
+          degrees: planet.degrees,
+          minutes: planet.minutes,
+          house: planet.house,
+          retrograde: planet.retrograde ?? false,
         },
-        onError: () => {
+      }),
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        clearTimeout(timeoutId);
+        const result = d?.result?.data?.json;
+        if (result) {
+          setText(result);
+        } else {
           setText(getLocalInterpretation(planet));
-          setLoading(false);
-        },
-      }
-    );
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        clearTimeout(timeoutId);
+        setText(getLocalInterpretation(planet));
+        setLoading(false);
+      });
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [visible, planet]);
 
   if (!planet) return null;
