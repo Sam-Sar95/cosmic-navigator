@@ -1,4 +1,3 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -12,9 +11,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { getThemeById } from "@/lib/astral-store";
-import type { AstrologicalData, PlanetaryPosition, SavedTheme } from "@/lib/astral-store";
-import { getApiBaseUrl } from "@/constants/oauth";
+import type { PlanetaryPosition, SavedTheme } from "@/lib/astral-store";
+import { trpc } from "@/lib/trpc";
 
 const PLANET_COLORS: Record<string, string> = {
   sun:       "#fbbf24",
@@ -94,75 +94,27 @@ function getLocalInterpretation(p: PlanetaryPosition): string {
     `Il ${p.name} in ${p.sign} porta con sé caratteristiche di ${getSignKeywords(p.sign)}. ` +
     `La Casa ${p.house} amplifica questi temi nella sfera ${getHouseTheme(p.house)} della vita.\n\n` +
     (p.retrograde ? `Il moto retrogrado suggerisce una riflessione interiore e una rielaborazione delle energie di questo pianeta.\n\n` : "") +
-    `Interpretazione generata con AI avanzata.`;  // Questo testo appare solo se il server AI non è raggiungibile
+    `(Interpretazione locale — connessione AI non disponibile)`;
 }
 
+// Modale che riceve il testo già pronto come prop
 interface InterpretationModalProps {
   visible: boolean;
   planet: PlanetaryPosition | null;
+  interpretationText: string;
+  loading: boolean;
   onClose: () => void;
 }
 
-function InterpretationModal({ visible, planet, onClose }: InterpretationModalProps) {
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!visible || !planet) return;
-    setText("");
-    setLoading(true);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    fetch(`${getApiBaseUrl()}/api/trpc/gemini.interpretElement`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-      body: JSON.stringify({
-        json: {
-          planetName: planet.name,
-          sign: planet.sign,
-          degrees: planet.degrees,
-          minutes: planet.minutes,
-          house: planet.house,
-          retrograde: planet.retrograde ?? false,
-        },
-      }),
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        clearTimeout(timeoutId);
-        const result = d?.result?.data?.json;
-        if (result) {
-          setText(result);
-        } else {
-          setText(getLocalInterpretation(planet));
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        clearTimeout(timeoutId);
-        setText(getLocalInterpretation(planet));
-        setLoading(false);
-      });
-
-    return () => {
-      clearTimeout(timeoutId);
-      controller.abort();
-    };
-  }, [visible, planet]);
-
+function InterpretationModal({ visible, planet, interpretationText, loading, onClose }: InterpretationModalProps) {
   if (!planet) return null;
   const color = PLANET_COLORS[getPlanetKey(planet.name)] ?? "#a78bfa";
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
       <View style={iStyles.overlay}>
         <View style={iStyles.sheet}>
-          {/* Handle */}
           <View style={iStyles.handle} />
-          {/* Header */}
           <View style={iStyles.header}>
             <View style={[iStyles.symbolBadge, { backgroundColor: color + "22", borderColor: color }]}>
               <Text style={[iStyles.symbol, { color }]}>{planet.symbol ?? "?"}</Text>
@@ -176,16 +128,18 @@ function InterpretationModal({ visible, planet, onClose }: InterpretationModalPr
               <Text style={iStyles.closeText}>✕</Text>
             </TouchableOpacity>
           </View>
-          {/* Contenuto */}
-          <ScrollView style={iStyles.body} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={iStyles.body}
+            showsVerticalScrollIndicator
+            contentContainerStyle={{ paddingBottom: 48 }}
+          >
             {loading ? (
               <View style={iStyles.loadingContainer}>
                 <ActivityIndicator color="#a78bfa" size="large" />
-                <Text style={iStyles.loadingText}>✨ AI sta interpretando...</Text>
-                <Text style={iStyles.loadingSubText}>Connessione con l'intelligenza cosmica...</Text>
+                <Text style={iStyles.loadingText}>✨ Connessione con l'intelligenza cosmica...</Text>
               </View>
             ) : (
-              <Text style={iStyles.interpText}>{text}</Text>
+              <Text style={iStyles.interpText}>{interpretationText}</Text>
             )}
           </ScrollView>
         </View>
@@ -201,7 +155,12 @@ export default function AstralThemeScreen() {
   const [loading, setLoading] = useState(true);
   const [selectedPlanet, setSelectedPlanet] = useState<PlanetaryPosition | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [interpText, setInterpText] = useState("");
+  const [interpLoading, setInterpLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Hook tRPC dentro il componente principale — contesto garantito
+  const interpretMutation = trpc.gemini.interpretElement.useMutation();
 
   useEffect(() => {
     if (!themeId) return;
@@ -214,7 +173,36 @@ export default function AstralThemeScreen() {
 
   const handlePlanetPress = (planet: PlanetaryPosition) => {
     setSelectedPlanet(planet);
+    setInterpText("");
+    setInterpLoading(true);
     setShowModal(true);
+
+    interpretMutation.mutate(
+      {
+        planetName: planet.name ?? "",
+        sign: planet.sign ?? "",
+        degrees: planet.degrees ?? 0,
+        minutes: planet.minutes ?? 0,
+        house: planet.house ?? 1,
+        retrograde: planet.retrograde ?? false,
+      },
+      {
+        onSuccess: (data) => {
+          setInterpText(typeof data === "string" ? data : getLocalInterpretation(planet));
+          setInterpLoading(false);
+        },
+        onError: () => {
+          setInterpText(getLocalInterpretation(planet));
+          setInterpLoading(false);
+        },
+      }
+    );
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedPlanet(null);
+    setInterpText("");
   };
 
   if (loading) {
@@ -267,12 +255,10 @@ export default function AstralThemeScreen() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View>
-              {/* Sezione Punti Principali */}
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>✦ Punti Principali</Text>
                 <Text style={styles.sectionHint}>Tocca un elemento per l'interpretazione AI</Text>
               </View>
-              {/* Card Sole/Luna/Ascendente in evidenza */}
               <View style={styles.bigThreeRow}>
                 {["sun","moon","ascendant"].map((k) => {
                   const p = (data as any)[k] as PlanetaryPosition;
@@ -298,7 +284,7 @@ export default function AstralThemeScreen() {
           }
           renderItem={({ item }) => {
             const { key, planet: p } = item;
-            if (!p) return null; // sicurezza: salta pianeti mancanti
+            if (!p) return null;
             const color = PLANET_COLORS[key] ?? "#a78bfa";
             const isBigThree = ["sun","moon","ascendant"].includes(key);
             if (isBigThree) return null;
@@ -324,12 +310,10 @@ export default function AstralThemeScreen() {
           }}
           ListFooterComponent={
             <View>
-              {/* Case astrologiche */}
               <Text style={styles.sectionTitle2}>Case Astrologiche</Text>
               <View style={styles.housesGrid}>
                 {Array.isArray(data.houses) && data.houses.length > 0 ? (
                   data.houses.map((h: any, index: number) => {
-                    // Supporta sia il campo 'number' (frontend) che 'house' (backend raw)
                     const houseNum = h.number ?? h.house ?? (index + 1);
                     return (
                       <View key={`house-${houseNum}-${index}`} style={styles.houseCell}>
@@ -345,10 +329,9 @@ export default function AstralThemeScreen() {
                   </View>
                 )}
               </View>
-              {/* Nota interpretazione */}
               <View style={styles.aiHint}>
                 <Text style={styles.aiHintText}>
-                  ✨ Tocca qualsiasi pianeta o punto astrale per ricevere un'interpretazione personalizzata con AI avanzata
+                  ✨ Tocca qualsiasi pianeta o punto astrale per ricevere un'interpretazione personalizzata con l'intelligenza cosmica
                 </Text>
               </View>
             </View>
@@ -359,7 +342,9 @@ export default function AstralThemeScreen() {
       <InterpretationModal
         visible={showModal}
         planet={selectedPlanet}
-        onClose={() => setShowModal(false)}
+        interpretationText={interpText}
+        loading={interpLoading}
+        onClose={handleCloseModal}
       />
     </SafeAreaView>
   );
@@ -434,21 +419,24 @@ const styles = StyleSheet.create({
 });
 
 const iStyles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", justifyContent: "flex-end" },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },
   sheet: {
-    backgroundColor: "#0d1128", borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    maxHeight: "80%",
+    backgroundColor: "#0d1128",
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    maxHeight: "82%",
     borderTopWidth: 1, borderColor: "#2e3a5c",
     flexDirection: "column",
   },
   handle: {
     width: 40, height: 4, backgroundColor: "#2e3a5c",
     borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 8,
+    flexShrink: 0,
   },
   header: {
     flexDirection: "row", alignItems: "center", gap: 14,
     paddingHorizontal: 20, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: "#2e3a5c",
+    flexShrink: 0,
   },
   symbolBadge: {
     width: 52, height: 52, borderRadius: 26,
@@ -465,8 +453,7 @@ const iStyles = StyleSheet.create({
   },
   closeText: { color: "#94a3c8", fontSize: 16 },
   body: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
-  loadingContainer: { alignItems: "center", paddingVertical: 40, gap: 16 },
-  loadingText: { color: "#f0f4ff", fontSize: 16, fontWeight: "600" },
-  loadingSubText: { color: "#94a3c8", fontSize: 13 },
-  interpText: { color: "#f0f4ff", fontSize: 15, lineHeight: 26, paddingBottom: 40 },
+  loadingContainer: { alignItems: "center", paddingVertical: 60, gap: 16 },
+  loadingText: { color: "#a78bfa", fontSize: 15, textAlign: "center" },
+  interpText: { color: "#f0f4ff", fontSize: 15, lineHeight: 26 },
 });
