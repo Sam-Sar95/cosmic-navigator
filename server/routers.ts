@@ -37,38 +37,68 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         // Chiama il servizio Python (pyswisseph) per i calcoli astrologici
+        // Usa percorso assoluto per evitare problemi con interpreti multipli (uv Python 3.13 vs system Python 3.11)
         const { spawn } = await import('child_process');
         const path = await import('path');
+        const fs = await import('fs');
         const scriptPath = path.join(process.cwd(), 'server', 'astrology_service.py');
         
-        return new Promise((resolve, reject) => {
-          const py = spawn('python3', [scriptPath]);
-          let stdout = '';
-          let stderr = '';
-          
-          py.stdout.on('data', (d: Buffer) => { stdout += d.toString(); });
-          py.stderr.on('data', (d: Buffer) => { stderr += d.toString(); });
-          
-          py.on('close', (code: number) => {
-            if (code !== 0) {
-              console.error('Astrology Python error:', stderr);
-              reject(new Error('Errore nel calcolo del tema astrale: ' + stderr.slice(0, 200)));
-              return;
+        // Cerca il miglior interprete Python disponibile con le librerie necessarie
+        const pythonCandidates = [
+          '/usr/bin/python3',
+          '/usr/bin/python3.11',
+          '/usr/local/bin/python3',
+          'python3',
+        ];
+        
+        let pythonExe = 'python3';
+        for (const candidate of pythonCandidates) {
+          try {
+            if (candidate.startsWith('/') && fs.existsSync(candidate)) {
+              pythonExe = candidate;
+              break;
+            } else if (!candidate.startsWith('/')) {
+              pythonExe = candidate;
             }
-            try {
-              resolve(JSON.parse(stdout));
-            } catch (e) {
-              reject(new Error('Risposta Python non valida: ' + stdout.slice(0, 200)));
-            }
-          });
-          
-          py.on('error', (err: Error) => {
-            reject(new Error('Python non disponibile: ' + err.message));
-          });
-          
-          py.stdin.write(JSON.stringify(input));
-          py.stdin.end();
+          } catch { /* continua */ }
+        }
+        
+        console.log('[astrology] Using Python:', pythonExe, '| Script:', scriptPath);
+        
+        // Crea un ambiente pulito per Python: rimuove PYTHONPATH e NUITKA_PYTHONPATH
+        // che causano 'SRE module mismatch' quando Python 3.11 carica moduli di Python 3.13
+        const cleanEnv: NodeJS.ProcessEnv = { ...process.env };
+        // Rimuove PYTHONPATH e NUITKA_PYTHONPATH che causano 'SRE module mismatch'
+        // quando Python 3.11 carica accidentalmente moduli compilati per Python 3.13
+        delete cleanEnv['NUITKA_PYTHONPATH'];
+        cleanEnv['PYTHONPATH'] = '';
+        cleanEnv['PYTHONNOUSERSITE'] = '1';
+        
+        // Usa spawnSync per evitare problemi di tipo TypeScript con stdin
+        const { spawnSync } = await import('child_process');
+        const result = spawnSync(pythonExe, [scriptPath], {
+          input: JSON.stringify(input),
+          env: cleanEnv,
+          encoding: 'utf8',
+          timeout: 30000,
+          maxBuffer: 10 * 1024 * 1024,
         });
+        
+        if (result.stderr) console.log('[astrology] Python stderr:', result.stderr.slice(0, 500));
+        
+        if (result.status !== 0 || result.error) {
+          const errMsg = result.stderr || (result.error?.message ?? 'Errore sconosciuto');
+          console.error('[astrology] Python failed:', errMsg);
+          throw new Error('Errore nel calcolo del tema astrale: ' + errMsg.slice(0, 300));
+        }
+        
+        try {
+          const parsed = JSON.parse(result.stdout);
+          console.log('[astrology] Success - Sun:', parsed.sun?.degrees, parsed.sun?.sign);
+          return parsed;
+        } catch (e) {
+          throw new Error('Risposta Python non valida: ' + result.stdout.slice(0, 200));
+        }
       }),
     
     saveTheme: protectedProcedure
