@@ -124,12 +124,18 @@ export default function CompatibilityScreen() {
       <Modal visible={visible} animationType="slide" transparent>
         <View style={pickerStyles.overlay}>
           <View style={pickerStyles.sheet}>
+            {/* Handle */}
             <View style={pickerStyles.handle} />
+            {/* Titolo */}
             <Text style={pickerStyles.title}>Seleziona tema</Text>
+            {/* Lista scorrevole: flex:1 garantisce che occupi tutto lo spazio disponibile */}
             <FlatList
               data={themes}
               keyExtractor={(t) => t.id}
-              contentContainerStyle={{ padding: 16, gap: 10 }}
+              style={pickerStyles.list}
+              contentContainerStyle={pickerStyles.listContent}
+              showsVerticalScrollIndicator={true}
+              indicatorStyle="white"
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={pickerStyles.item}
@@ -151,6 +157,7 @@ export default function CompatibilityScreen() {
                 </View>
               }
             />
+            {/* Bottone Annulla fisso in fondo, fuori dal FlatList */}
             <TouchableOpacity style={pickerStyles.closeBtn} onPress={onClose}>
               <Text style={pickerStyles.closeBtnText}>Annulla</Text>
             </TouchableOpacity>
@@ -357,20 +364,39 @@ const pickerStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: "#0d1128", borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    maxHeight: "70%", borderTopWidth: 1, borderColor: "#2e3a5c",
+    // maxHeight limita l'altezza del foglio; flex:1 interno permette alla lista di espandersi
+    maxHeight: "75%",
+    borderTopWidth: 1, borderColor: "#2e3a5c",
+    // Il sheet usa flexbox column per impilare: handle + titolo + lista + bottone
+    flexDirection: "column",
   },
   handle: {
     width: 40, height: 4, backgroundColor: "#2e3a5c",
     borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 4,
+    // Non deve crescere
+    flexShrink: 0,
   },
   title: {
     color: "#f0f4ff", fontSize: 17, fontWeight: "700",
     paddingHorizontal: 20, paddingVertical: 14,
     borderBottomWidth: 1, borderBottomColor: "#2e3a5c",
+    // Non deve crescere
+    flexShrink: 0,
+  },
+  // La lista occupa tutto lo spazio disponibile tra titolo e bottone
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+    gap: 10,
+    // Altezza minima per garantire che almeno 5 item siano visibili e la lista sia scorrevole
+    minHeight: 5 * 72,
   },
   item: {
     backgroundColor: "#141830", borderRadius: 12,
     padding: 14, borderWidth: 1, borderColor: "#2e3a5c",
+    minHeight: 62,
   },
   itemName: { color: "#f0f4ff", fontSize: 15, fontWeight: "700" },
   itemSub: { color: "#94a3c8", fontSize: 12, marginTop: 4 },
@@ -378,6 +404,8 @@ const pickerStyles = StyleSheet.create({
     margin: 16, backgroundColor: "#1a1f3a", borderRadius: 14,
     paddingVertical: 14, alignItems: "center",
     borderWidth: 1, borderColor: "#2e3a5c",
+    // Non deve crescere
+    flexShrink: 0,
   },
   closeBtnText: { color: "#94a3c8", fontSize: 15, fontWeight: "600" },
 });
