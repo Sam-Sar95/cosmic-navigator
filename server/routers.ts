@@ -32,21 +32,43 @@ export const appRouter = router({
         minute: z.number(),
         latitude: z.number(),
         longitude: z.number(),
-        timezone: z.number(),
+        timezone: z.number().optional(),
+        placeName: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
-        // Chiama il servizio Python per i calcoli
-        const { execSync } = require('child_process');
-        try {
-          const result = execSync(
-            `python3 ${process.cwd()}/server/astrology_service.py`,
-            { input: JSON.stringify(input), encoding: 'utf-8' }
-          );
-          return JSON.parse(result);
-        } catch (error: any) {
-          console.error('Astrology calculation error:', error.message);
-          throw new Error('Errore nel calcolo del tema astrale');
-        }
+        // Chiama il servizio Python (pyswisseph) per i calcoli astrologici
+        const { spawn } = await import('child_process');
+        const path = await import('path');
+        const scriptPath = path.join(process.cwd(), 'server', 'astrology_service.py');
+        
+        return new Promise((resolve, reject) => {
+          const py = spawn('python3', [scriptPath]);
+          let stdout = '';
+          let stderr = '';
+          
+          py.stdout.on('data', (d: Buffer) => { stdout += d.toString(); });
+          py.stderr.on('data', (d: Buffer) => { stderr += d.toString(); });
+          
+          py.on('close', (code: number) => {
+            if (code !== 0) {
+              console.error('Astrology Python error:', stderr);
+              reject(new Error('Errore nel calcolo del tema astrale: ' + stderr.slice(0, 200)));
+              return;
+            }
+            try {
+              resolve(JSON.parse(stdout));
+            } catch (e) {
+              reject(new Error('Risposta Python non valida: ' + stdout.slice(0, 200)));
+            }
+          });
+          
+          py.on('error', (err: Error) => {
+            reject(new Error('Python non disponibile: ' + err.message));
+          });
+          
+          py.stdin.write(JSON.stringify(input));
+          py.stdin.end();
+        });
       }),
     
     saveTheme: protectedProcedure

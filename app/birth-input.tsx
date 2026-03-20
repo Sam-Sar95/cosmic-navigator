@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { calculateAstralTheme } from "@/lib/astro-calc";
+import { trpc } from "@/lib/trpc";
 import { generateId, saveTheme } from "@/lib/astral-store";
 import type { BirthData } from "@/lib/astral-store";
 
@@ -26,7 +26,7 @@ const CITY_DATA: Record<string, { lat: number; lon: number; tz: number }> = {
   "napoli":       { lat: 40.8518, lon: 14.2681, tz: 2 },
   "torino":       { lat: 45.0703, lon: 7.6869,  tz: 2 },
   "palermo":      { lat: 38.1157, lon: 13.3615, tz: 2 },
-  "genova":       { lat: 44.4056, lon: 8.9463,  tz: 2 },
+  "genova":       { lat: 44.4000, lon: 8.8833,  tz: 1 },  // 44°24'N 8°53'E (coordinate esatte)
   "bologna":      { lat: 44.4949, lon: 11.3426, tz: 2 },
   "firenze":      { lat: 43.7696, lon: 11.2558, tz: 2 },
   "venezia":      { lat: 45.4408, lon: 12.3155, tz: 2 },
@@ -103,6 +103,8 @@ export default function BirthInputScreen() {
   const [place, setPlace] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const calculateMutation = trpc.astrology.calculate.useMutation();
+
   const handleCalculate = async () => {
     if (!name.trim()) { Alert.alert("Errore", "Inserisci un nome per il tema."); return; }
     const d = parseInt(day), m = parseInt(month), y = parseInt(year);
@@ -130,13 +132,21 @@ export default function BirthInputScreen() {
         placeName: place.trim(),
       };
 
-      const astroData = calculateAstralTheme(birthData);
+      // Usa il servizio Python (pyswisseph) via tRPC per calcoli di precisione professionale
+      const astroData = await calculateMutation.mutateAsync({
+        year: y, month: m, day: d,
+        hour: h, minute: min,
+        latitude: geo.lat,
+        longitude: geo.lon,
+        timezone: geo.tz,
+        placeName: place.trim(),
+      });
 
       const theme = {
         id: generateId(),
         name: name.trim(),
         birthData,
-        astrologicalData: astroData,
+        astrologicalData: astroData as any,
         createdAt: new Date().toISOString(),
       };
 

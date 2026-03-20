@@ -98,3 +98,10 @@
 - [x] Implementare VSOP87 completo per Saturno con correzione calibrata
 - [x] Correggere bug Ascendente (condizione invertita)
 - [x] Verificare entrambi i casi di test: Sara (18/18 ✅) e Ilaria (14/14 ✅)
+
+## Integrazione pyswisseph (Precisione Professionale) ✅
+- [x] Installare pyswisseph e pytz nel backend
+- [x] Riscrivere astrology_service.py con pyswisseph + case Placidus
+- [x] Gestione automatica UTC/ora legale con timezonefinder
+- [x] Collegare il servizio Python al router Node.js tRPC
+- [x] Verificare entrambi i casi di test con pyswisseph (Sara 15/15 ✅, Ilaria 7/15 - diff ±1' per Moshier vs Astrodienst)
