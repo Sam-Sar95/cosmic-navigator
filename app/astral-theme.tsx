@@ -419,8 +419,9 @@ const iStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.75)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: "#0d1128", borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    paddingBottom: 40, maxHeight: "82%",
+    maxHeight: "80%",
     borderTopWidth: 1, borderColor: "#2e3a5c",
+    flexDirection: "column",
   },
   handle: {
     width: 40, height: 4, backgroundColor: "#2e3a5c",
@@ -445,9 +446,9 @@ const iStyles = StyleSheet.create({
     borderWidth: 1, borderColor: "#2e3a5c",
   },
   closeText: { color: "#94a3c8", fontSize: 16 },
-  body: { paddingHorizontal: 20, paddingTop: 16 },
+  body: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
   loadingContainer: { alignItems: "center", paddingVertical: 40, gap: 16 },
   loadingText: { color: "#f0f4ff", fontSize: 16, fontWeight: "600" },
   loadingSubText: { color: "#94a3c8", fontSize: 13 },
-  interpText: { color: "#f0f4ff", fontSize: 15, lineHeight: 26 },
+  interpText: { color: "#f0f4ff", fontSize: 15, lineHeight: 26, paddingBottom: 40 },
 });
