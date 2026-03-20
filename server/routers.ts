@@ -65,14 +65,21 @@ export const appRouter = router({
         
         console.log('[astrology] Using Python:', pythonExe, '| Script:', scriptPath);
         
-        // Crea un ambiente pulito per Python: rimuove PYTHONPATH e NUITKA_PYTHONPATH
-        // che causano 'SRE module mismatch' quando Python 3.11 carica moduli di Python 3.13
+        // Crea un ambiente COMPLETAMENTE PULITO per Python 3.11:
+        // Il server ha PYTHONHOME, PYTHONPATH e NUITKA_PYTHONPATH impostati su Python 3.13
+        // (da /home/ubuntu/.local/share/uv/python/cpython-3.13.8-linux-x86_64-gnu)
+        // Quando Python 3.11 viene avviato con PYTHONHOME=Python3.13, cerca la libreria
+        // standard in /lib/python3.13 invece di /lib/python3.11 -> crash SRE module mismatch.
+        // Soluzione: rimuovere PYTHONHOME, PYTHONPATH e NUITKA_PYTHONPATH dall'ambiente.
         const cleanEnv: NodeJS.ProcessEnv = { ...process.env };
-        // Rimuove PYTHONPATH e NUITKA_PYTHONPATH che causano 'SRE module mismatch'
-        // quando Python 3.11 carica accidentalmente moduli compilati per Python 3.13
-        delete cleanEnv['NUITKA_PYTHONPATH'];
-        cleanEnv['PYTHONPATH'] = '';
-        cleanEnv['PYTHONNOUSERSITE'] = '1';
+        // FIX CRITICO: Il server ha PYTHONHOME=/home/ubuntu/.local/share/uv/python/cpython-3.13.8-linux-x86_64-gnu
+        // Questo fa sì che Python 3.11 cerchi la libreria standard in /lib/python3.13 -> crash SRE module mismatch.
+        // Soluzione: sovrascrivere PYTHONHOME con /usr (prefisso di sistema di Python 3.11)
+        // e rimuovere PYTHONPATH/NUITKA_PYTHONPATH che puntano a Python 3.13.
+        cleanEnv['PYTHONHOME'] = '/usr';      // Prefisso Python 3.11 (/usr/lib/python3.11)
+        delete cleanEnv['NUITKA_PYTHONPATH']; // Rimuove path Python 3.13 di Nuitka
+        delete cleanEnv['PYTHONPATH'];        // Rimuove path Python 3.13
+        cleanEnv['PYTHONNOUSERSITE'] = '1';   // Non caricare site-packages utente
         
         // Usa spawnSync per evitare problemi di tipo TypeScript con stdin
         const { spawnSync } = await import('child_process');
