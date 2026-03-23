@@ -9,6 +9,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,6 +17,7 @@ import { getThemeById } from "@/lib/astral-store";
 import type { PlanetaryPosition, SavedTheme } from "@/lib/astral-store";
 import { trpc } from "@/lib/trpc";
 import { getApiBaseUrl } from "@/constants/oauth";
+import { shareThemeAsText } from "@/lib/export-theme";
 
 const PLANET_COLORS: Record<string, string> = {
   sun:       "#fbbf24",
@@ -159,6 +161,7 @@ export default function AstralThemeScreen() {
   const [interpText, setInterpText] = useState("");
   const [interpLoading, setInterpLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const themeViewRef = useRef(null);
 
   // Hook tRPC dentro il componente principale — contesto garantito
   const interpretMutation = trpc.gemini.interpretElement.useMutation();
@@ -279,6 +282,16 @@ export default function AstralThemeScreen() {
             {birthData.day}/{birthData.month}/{birthData.year} · {String(birthData.hour).padStart(2,"0")}:{String(birthData.minute).padStart(2,"0")} · {birthData.placeName}
           </Text>
         </View>
+        <TouchableOpacity
+          style={[styles.backBtn, { marginLeft: 8 }]}
+          onPress={() => {
+            shareThemeAsText(theme).catch(() =>
+              Alert.alert("Errore", "Impossibile condividere il tema")
+            );
+          }}
+        >
+          <Text style={{ fontSize: 18 }}>📤</Text>
+        </TouchableOpacity>
       </View>
 
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
