@@ -466,15 +466,14 @@ const styles = StyleSheet.create({
 });
 
 const iStyles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "flex-end" },
   sheet: {
     backgroundColor: "#0d1128",
     borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    maxHeight: "82%",
-    minHeight: 300,
+    height: "100%",
     borderTopWidth: 1, borderColor: "#2e3a5c",
     flexDirection: "column",
-    flex: 0,
+    flex: 1,
   },
   handle: {
     width: 40, height: 4, backgroundColor: "#2e3a5c",
