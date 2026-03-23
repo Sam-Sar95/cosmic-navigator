@@ -61,15 +61,6 @@ function ThemeCard({ theme, onPress }: { theme: SavedTheme; onPress: () => void 
 
 export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return <SplashScreen />;
-  }
   const router = useRouter();
   const [themes, setThemes] = useState<SavedTheme[]>([]);
   const [greeting, setGreeting] = useState("");
@@ -77,6 +68,12 @@ export default function HomeScreen() {
   const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (isLoading) return;
     // Controlla onboarding
     AsyncStorage.getItem("onboarding_done").then((done) => {
       if (!done) router.replace("/onboarding");
@@ -96,7 +93,7 @@ export default function HomeScreen() {
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
-  }, []);
+  }, [isLoading]);
 
   // Ricarica temi quando la schermata torna in focus
   useEffect(() => {
@@ -105,6 +102,10 @@ export default function HomeScreen() {
     }, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  if (isLoading) {
+    return <SplashScreen />;
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
