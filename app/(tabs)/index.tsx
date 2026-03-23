@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getSavedThemes } from "@/lib/astral-store";
 import type { SavedTheme } from "@/lib/astral-store";
+import { SplashScreen } from "@/components/splash-screen";
 
 const ZODIAC_EMOJIS: Record<string, string> = {
   "Ariete": "♈", "Toro": "♉", "Gemelli": "♊", "Cancro": "♋",
@@ -59,6 +60,16 @@ function ThemeCard({ theme, onPress }: { theme: SavedTheme; onPress: () => void 
 }
 
 export default function HomeScreen() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return <SplashScreen />;
+  }
   const router = useRouter();
   const [themes, setThemes] = useState<SavedTheme[]>([]);
   const [greeting, setGreeting] = useState("");
