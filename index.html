@@ -45,18 +45,64 @@
       #root {
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .logo {
+        width: 120px;
+        height: 120px;
+        background: url('/assets/images/icon.png') center/contain no-repeat;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(236, 237, 238, 0.2);
+        border-top: 3px solid #7c3aed;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      .text {
+        font-size: 1.2rem;
+        text-align: center;
+        color: #9ba1a6;
       }
     </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script src="./index.js"></script>
+    <div id="root">
+      <div class="loading-container">
+        <div class="logo"></div>
+        <div class="spinner"></div>
+        <div class="text">Caricamento di Cosmic Navigator...</div>
+      </div>
+    </div>
+
     <script>
+      // PWA Service Worker Registration
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js').catch(err => {
+        navigator.serviceWorker.register('/public/service-worker.js').catch(err => {
           console.log('Service Worker registration failed:', err);
         });
       }
+
+      // Placeholder: In futuro, il vero app React Native/Expo sarà caricato qui
+      // Per ora mostriamo una pagina di caricamento che indica che l'app è in preparazione
+      console.log('Cosmic Navigator PWA - Loading...');
     </script>
   </body>
 </html>
