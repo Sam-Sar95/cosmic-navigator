@@ -88,6 +88,7 @@ export default function ArchiveScreen() {
                 <TouchableOpacity
                   style={styles.deleteBtn}
                   onPress={() => handleDelete(item.id, item.name)}
+                  activeOpacity={0.6}
                 >
                   <Text style={styles.deleteText}>🗑</Text>
                 </TouchableOpacity>
