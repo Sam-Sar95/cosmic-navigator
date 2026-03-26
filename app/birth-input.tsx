@@ -266,7 +266,7 @@ export default function BirthInputScreen() {
                 style={styles.input}
                 value={day}
                 onChangeText={setDay}
-                placeholder="10"
+                placeholder="GG"
                 placeholderTextColor="#4a5568"
                 keyboardType="numeric"
                 maxLength={2}
@@ -279,7 +279,7 @@ export default function BirthInputScreen() {
                 style={styles.input}
                 value={month}
                 onChangeText={setMonth}
-                placeholder="05"
+                placeholder="MM"
                 placeholderTextColor="#4a5568"
                 keyboardType="numeric"
                 maxLength={2}
@@ -292,7 +292,7 @@ export default function BirthInputScreen() {
                 style={styles.input}
                 value={year}
                 onChangeText={setYear}
-                placeholder="1995"
+                placeholder="AAAA"
                 placeholderTextColor="#4a5568"
                 keyboardType="numeric"
                 maxLength={4}
@@ -310,7 +310,7 @@ export default function BirthInputScreen() {
                 style={styles.input}
                 value={hour}
                 onChangeText={setHour}
-                placeholder="13"
+                placeholder="HH"
                 placeholderTextColor="#4a5568"
                 keyboardType="numeric"
                 maxLength={2}
@@ -323,7 +323,7 @@ export default function BirthInputScreen() {
                 style={styles.input}
                 value={minute}
                 onChangeText={setMinute}
-                placeholder="20"
+                placeholder="MM"
                 placeholderTextColor="#4a5568"
                 keyboardType="numeric"
                 maxLength={2}
@@ -352,19 +352,6 @@ export default function BirthInputScreen() {
           <Text style={styles.hint}>
             Inserisci il nome della città. Per risultati migliori usa il nome in italiano o inglese.
           </Text>
-
-          {/* Esempio */}
-          <TouchableOpacity
-            style={styles.exampleBtn}
-            onPress={() => {
-              setName("Tema di esempio");
-              setDay("10"); setMonth("05"); setYear("1995");
-              setHour("13"); setMinute("20");
-              setPlace("Ceva");
-            }}
-          >
-            <Text style={styles.exampleBtnText}>✦ Usa dati di esempio (10/05/1995 13:20 Ceva)</Text>
-          </TouchableOpacity>
 
           {/* Calcola */}
           <TouchableOpacity
