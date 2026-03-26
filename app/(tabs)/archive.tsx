@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -85,18 +86,13 @@ export default function ArchiveScreen() {
                     {item.birthData.day}/{item.birthData.month}/{item.birthData.year} · {item.birthData.placeName}
                   </Text>
                 </View>
-                <View style={{ zIndex: 10 }}>
-                  <TouchableOpacity
-                    style={styles.deleteBtn}
-                    onPress={(e: any) => {
-                      e.stopPropagation?.();
-                      handleDelete(item.id, item.name);
-                    }}
-                    activeOpacity={0.6}
-                  >
-                    <Text style={styles.deleteText}>🗑</Text>
-                  </TouchableOpacity>
-                </View>
+                <Pressable
+                  style={styles.deleteBtn}
+                  onPress={() => handleDelete(item.id, item.name)}
+                  hitSlop={8}
+                >
+                  <Text style={styles.deleteText}>🗑</Text>
+                </Pressable>
               </View>
               <View style={styles.tripleRow}>
                 <View style={styles.tripleItem}>
