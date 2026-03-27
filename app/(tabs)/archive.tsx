@@ -86,13 +86,18 @@ export default function ArchiveScreen() {
                     {item.birthData.day}/{item.birthData.month}/{item.birthData.year} · {item.birthData.placeName}
                   </Text>
                 </View>
-                <Pressable
-                  style={styles.deleteBtn}
-                  onPress={() => handleDelete(item.id, item.name)}
-                  hitSlop={8}
-                >
-                  <Text style={styles.deleteText}>🗑</Text>
-                </Pressable>
+                <View style={styles.deleteBtnWrapper}>
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      handleDelete(item.id, item.name);
+                    }}
+                    activeOpacity={0.6}
+                  >
+                    <Text style={styles.deleteText}>🗑</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               <View style={styles.tripleRow}>
                 <View style={styles.tripleItem}>
@@ -156,6 +161,7 @@ const styles = StyleSheet.create({
   iconText: { fontSize: 22 },
   cardName: { color: "#f0f4ff", fontSize: 16, fontWeight: "700" },
   cardDate: { color: "#94a3c8", fontSize: 12, marginTop: 2 },
+  deleteBtnWrapper: { zIndex: 10 },
   deleteBtn: {
     width: 36, height: 36, backgroundColor: "#1a1f3a",
     borderRadius: 10, alignItems: "center", justifyContent: "center",
