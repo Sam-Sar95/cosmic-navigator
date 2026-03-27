@@ -2,17 +2,9 @@
   "version": 2,
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/index.js"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+  "functions": {
+    "api/index.js": {
+      "runtime": "nodejs20.x"
     }
-  ]
+  }
 }
